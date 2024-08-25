@@ -9,8 +9,8 @@ type Comment struct {
 	Text      	string     	`gorm:"type:text;not null" json:"text" validate:"required"`
 	Image     	*string    	`gorm:"size:255" json:"image"`	
 	Email     	string     	`gorm:"size:100;not null" json:"email" validate:"required,email"`
-    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updated_at"`
+    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updatedAt"`
 
 	ArtikelID 	uuid.UUID  	`gorm:"type:char(36);not null" json:"artikel_id"`
 	Artikel   	Artikel    	`gorm:"foreignKey:ArtikelID" json:"artikel"`

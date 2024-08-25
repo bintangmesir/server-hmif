@@ -3,11 +3,17 @@ package alumni
 import (
 	"server/initialize"
 	"server/internal/models"
+	"server/pkg/utils"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
+type PatchAlumniBody struct {
+	Angkatan        string    `gorm:"size:4" json:"angkatan" validate:"required,max=4"`
+    Nama            string    `gorm:"size:100" json:"nama" validate:"required,max=100"`
+    NoTelephone     string    `gorm:"size:15" json:"noTelephone" validate:"required,max=15"`
+}
 
 func PatchAlumni (c *fiber.Ctx) error {
 
@@ -20,7 +26,7 @@ func PatchAlumni (c *fiber.Ctx) error {
 
     var alumni models.Alumni
         
-    newAlumni := models.Alumni {
+    newAlumni := PatchAlumniBody {
         Angkatan: form.Value["angkatan"][0],
         Nama: form.Value["nama"][0],                
         NoTelephone: form.Value["noTelephone"][0],                
@@ -42,10 +48,16 @@ func PatchAlumni (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(newAlumni); err != nil {
+	if err := validate.Struct(&newAlumni); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 

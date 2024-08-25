@@ -38,5 +38,8 @@ func DeleteAdmin (c *fiber.Ctx) error {
 	}
 
     
-    return c.SendStatus(fiber.StatusNoContent)
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{
+        "status": "success",
+        "message": "Data admin deleted.",
+    })
 }

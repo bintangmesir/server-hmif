@@ -49,10 +49,16 @@ func PostBuku (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(buku); err != nil {
+	if err := validate.Struct(&buku); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 

@@ -17,9 +17,11 @@ func PostAdmin (c *fiber.Ctx) error {
 		return err
 	}
 
+	var admin models.Admin
+
     fotoProfile := form.File["fotoProfile"]
 
-    admin := models.Admin {
+    newAdmin := models.Admin {
         Name: form.Value["name"][0],
         Email: form.Value["email"][0],
         Password: form.Value["password"][0],        
@@ -27,12 +29,12 @@ func PostAdmin (c *fiber.Ctx) error {
     }    
 
 	if uuidStr, err := uuid.NewUUID(); err == nil {
-		admin.ID = uuidStr
+		newAdmin.ID = uuidStr
 	} else {
 		return err
 	}
 
-    if err := initialize.DB.Where("email = ?", admin.Email).First(&admin).Error; err == nil {
+    if err := initialize.DB.Where("email = ?", newAdmin.Email).First(&admin).Error; err == nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
 			"message": "Email already used.",
@@ -41,32 +43,38 @@ func PostAdmin (c *fiber.Ctx) error {
 
     validate := validator.New()
 	
-    if err := c.BodyParser(&admin); err != nil {
+    if err := c.BodyParser(&newAdmin); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
             "message": "Invalid request body",
         })
 	}
 
-	if err := validate.Struct(admin); err != nil {
+	if err := validate.Struct(&newAdmin); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 
 	 if len(fotoProfile) > 0 {			
-		uploadedFileNames, err := utils.UploadFile(fotoProfile, initialize.ENV_DIR_ADMIN_FILES, admin.ID.String())
+		uploadedFileNames, err := utils.UploadFile(fotoProfile, initialize.ENV_DIR_ADMIN_FILES, newAdmin.ID.String())
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "status": "error",
 				"message": "Internal server error.",
 			})
 		}
-		admin.FotoProfile = &uploadedFileNames
+		newAdmin.FotoProfile = &uploadedFileNames
 	}
 	
-	if result := initialize.DB.Create(&admin); result.Error != nil {		
+	if result := initialize.DB.Create(&newAdmin); result.Error != nil {		
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "status": "error",
             "message": "Failed to create data admin",

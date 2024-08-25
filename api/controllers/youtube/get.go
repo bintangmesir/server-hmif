@@ -5,12 +5,11 @@ import (
 	"server/internal/models"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 type PaginationParams struct {
-    Cursor string `query:"cursor"`
-    Limit  int    `query:"limit"`
+    Offset int `query:"offset"`
+    Limit  int `query:"limit"`
 }
 
 func GetYoutube(c *fiber.Ctx) error {
@@ -21,14 +20,11 @@ func GetYoutube(c *fiber.Ctx) error {
             "message": "Invalid query parameters",
         })
     }
-    
-    if params.Limit == 0 {
-        params.Limit = 10
-    }
 
     var totalCount int64
     var youtube []models.Youtube
     
+    // Count the total number of records
     if err := initialize.DB.Model(&models.Youtube{}).Count(&totalCount).Error; err != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "status": "error",
@@ -36,35 +32,36 @@ func GetYoutube(c *fiber.Ctx) error {
         })
     }
     
+    if params.Limit == 0 {
+        params.Limit = int(totalCount)
+    }
+
+    // Offset default to 0 if not provided or negative
+    if params.Offset < 0 {
+        params.Offset = 0
+    }
+
     query := initialize.DB.Model(&models.Youtube{})
 
-    if params.Cursor != "" {        
-        cursorUUID, err := uuid.Parse(params.Cursor)
-        if err != nil {
-            return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-                "status": "error",
-                "message": "Invalid cursor UUID",
-            })
-        }
-        query = query.Where("id > ?", cursorUUID)
-    }
+    // Apply offset and limit
+    query = query.Order("created_at DESC").Offset(params.Offset).Limit(params.Limit).Find(&youtube)
     
-    query = query.Order("id").Limit(params.Limit).Find(&youtube)
     if query.Error != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "status": "error",
             "message": "Failed to retrieve youtube",
         })
     }
-    
-    var nextCursor string
-    if len(youtube) > 0 {
-        nextCursor = youtube[len(youtube)-1].ID.String()
+
+    // Calculate the next offset
+    offset := params.Offset + params.Limit
+    if offset > int(totalCount) {
+        offset = int(totalCount)
     }
 
     return c.Status(fiber.StatusOK).JSON(fiber.Map{
         "count":      totalCount,
-        "next":       nextCursor,
+        "offset":     offset,
         "limit":      params.Limit,
         "data":       youtube,
     })

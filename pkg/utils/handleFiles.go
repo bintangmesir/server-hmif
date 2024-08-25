@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 )
 
 func UploadFile(filenames []*multipart.FileHeader, filePath, id string) (string, error) {	
@@ -51,7 +50,7 @@ func UploadFile(filenames []*multipart.FileHeader, filePath, id string) (string,
 			return "", fiber.NewError(fiber.StatusBadRequest, "Invalid file type. Only JPEG, JPG, and PNG are allowed.")
 		}
 
-		newFilename := uuid.New().String() + "_" + time.Now().Format("20060102150405") + "_" + fileHeader.Filename
+		newFilename := time.Now().Format("20060102150405") + "_" + fileHeader.Filename
 		dstPath := fmt.Sprintf("%s%s", dirPath, newFilename)
 
 		dst, err := os.Create(dstPath)
@@ -87,12 +86,13 @@ func DeleteFile(filenamesString *string, filePath, id string) error {
 		filePath := fmt.Sprintf("%s%s", dirPath, filename)
 
 		if err := os.Remove(filePath); err != nil {
+			fmt.Println(err)
 			return err
 		}
 	}
 
 	// Remove the directory if empty
-	if err := os.Remove(dirPath); err != nil {
+	if err := os.Remove(dirPath); err != nil {		
 		return err
 	}
 

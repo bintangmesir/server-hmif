@@ -13,8 +13,8 @@ type Admin struct {
 	Password    string    `gorm:"size:255;not null" json:"-" validate:"required,min=6"`
 	FotoProfile *string   `gorm:"size:255" json:"fotoProfile"`
 	Role        string    `gorm:"size:20" json:"role" validate:"required,oneof=super_admin kadep_kominfo staff_kominfo kadep_prhp staff_prhp"`
-	CreatedAt   int64     `gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt   int64     `gorm:"autoUpdateTime:milli" json:"updated_at"`
+	CreatedAt   int64     `gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt   int64     `gorm:"autoUpdateTime:milli" json:"updatedAt"`
 }
 
 func (admin *Admin) BeforeCreate(tx *gorm.DB) (err error) {	

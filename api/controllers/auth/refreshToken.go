@@ -4,6 +4,7 @@ import (
 	"server/initialize"
 	"server/internal/models"
 	"server/pkg/utils"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -44,12 +45,14 @@ func RefreshTokenHandler(c *fiber.Ctx) error {
         })
     }
 
+    protocol, _ := strconv.ParseBool(initialize.ENV_POTOCOL_HTTPS)
+
     c.Cookie(&fiber.Cookie{
         Name:     "accessToken",
         Value:    newAccessToken,
         Expires:  time.Now().Add(time.Hour * 1), // Token expires in 1 hour                       
         HTTPOnly: false,        
-        Secure:   utils.HttpsCheck(c),       
+        Secure:   protocol,       
     })
     
     return c.Status(fiber.StatusOK).JSON(fiber.Map{

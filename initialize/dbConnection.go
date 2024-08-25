@@ -34,6 +34,7 @@ func DBConnection(){
     &models.Youtube{},
     &models.Pengurus{},
     &models.ArtikelMeta{},
+    &models.Himpunan{},
 	)
 
   DB = db

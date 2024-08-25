@@ -12,6 +12,6 @@ type Barang struct {
     RusakRingan int64       `gorm:"default:0" json:"rusakRingan" validate:"required"`
     RusakBerat  int64       `gorm:"default:0" json:"rusakBerat" validate:"required"`
     Keterangan  string       `gorm:"type:text" json:"keterangan" validate:"required"`    
-    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updated_at"`
+    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updatedAt"`
 }

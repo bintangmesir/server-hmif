@@ -13,6 +13,8 @@ func CommentRoute(app *fiber.App){
     v1 := api.Group("/v1")
     
     v1.Post("/comment", middlewares.RoleMiddleware([]string{}), comment.PostComment)
+
     v1.Patch("/comment/:id", middlewares.RoleMiddleware([]string{}), comment.PatchComment)
+    
     v1.Delete("/comment/:id", middlewares.RoleMiddleware([]string{}), comment.DeleteComment)
 }

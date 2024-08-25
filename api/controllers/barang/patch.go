@@ -3,11 +3,21 @@ package barang
 import (
 	"server/initialize"
 	"server/internal/models"
+	"server/pkg/utils"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
+
+type PatchBarangBody struct {
+	Nama        string      `gorm:"size:100" json:"nama" validate:"required,max=100"`
+    Jumlah      int64       `gorm:"default:0" json:"jumlah" validate:"required"`
+    Baik        int64       `gorm:"default:0" json:"baik" validate:"required"`
+    RusakRingan int64       `gorm:"default:0" json:"rusakRingan" validate:"required"`
+    RusakBerat  int64       `gorm:"default:0" json:"rusakBerat" validate:"required"`
+    Keterangan  string       `gorm:"type:text" json:"keterangan" validate:"required"`    
+}
 
 func PatchBarang (c *fiber.Ctx) error {
 
@@ -36,7 +46,7 @@ func PatchBarang (c *fiber.Ctx) error {
 
     var barang models.Barang
     
-    newBarang := models.Barang {
+    newBarang := PatchBarangBody {
         Nama: form.Value["nama"][0],                
         Jumlah: int64(jumlah),
         Baik: int64(baik),                
@@ -61,10 +71,16 @@ func PatchBarang (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(newBarang); err != nil {
+	if err := validate.Struct(&newBarang); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 

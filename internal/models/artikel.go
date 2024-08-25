@@ -12,12 +12,12 @@ type Artikel struct {
 	Thumbnail       *string         	`gorm:"size:255" json:"thumbnail"`
 	CommentEnabled  bool            	`gorm:"default:true" json:"commentEnabled"`
 	View  			int64       		`gorm:"default:0" json:"view" validate:"required"`
-	CreatedAt       int64           	`gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt       int64           	`gorm:"autoUpdateTime:milli" json:"updated_at"`
+	CreatedAt       int64           	`gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt       int64           	`gorm:"autoUpdateTime:milli" json:"updatedAt"`
 
 	Admins          []Admin         	`gorm:"many2many:artikel_admins;" json:"admins"`
 	ArtikelContents []ArtikelContent	`gorm:"foreignKey:ArtikelID" json:"artikelContents"`
-	ArtikelMetas   	[]ArtikelMeta 		`gorm:"many2many:artikel_artikel_meta;" json:"artikel_metas"`
+	ArtikelMetas   	[]ArtikelMeta 		`gorm:"many2many:artikel_artikel_meta;" json:"artikelMetas"`
 	Comment         *Comment         	`gorm:"foreignKey:ArtikelID" json:"comment"`    
 }
 

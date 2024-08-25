@@ -9,6 +9,6 @@ type Alumni struct {
 	Angkatan        string    `gorm:"size:4" json:"angkatan" validate:"required,max=4"`
     Nama            string    `gorm:"size:100" json:"nama" validate:"required,max=100"`
     NoTelephone     string    `gorm:"size:15" json:"noTelephone" validate:"required,max=15"`
-    CreatedAt       int64     `gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt       int64     `gorm:"autoUpdateTime:milli" json:"updated_at"`
+    CreatedAt       int64     `gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt       int64     `gorm:"autoUpdateTime:milli" json:"updatedAt"`
 }

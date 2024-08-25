@@ -14,6 +14,6 @@ type Buku struct {
     Abstrak     string      `gorm:"type:text" json:"abstrak" validate:"required"`
     Jumlah      int64       `gorm:"default:0" json:"jumlah" validate:"required"`    
     Cover       *string     `gorm:"size:255" json:"cover"`
-    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"created_at"`
-	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updated_at"`
+    CreatedAt   int64       `gorm:"autoCreateTime:milli" json:"createdAt"`
+	UpdatedAt   int64       `gorm:"autoUpdateTime:milli" json:"updatedAt"`
 }

@@ -3,11 +3,16 @@ package youtube
 import (
 	"server/initialize"
 	"server/internal/models"
+	"server/pkg/utils"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 )
 
+type PatchYoutubeBody struct {
+	Judul       string      `gorm:"size:100" json:"judul" validate:"required,max=100"`
+    Link        string      `gorm:"size:255" json:"link" validate:"required,url,max=100"`
+}
 
 func PatchYoutube (c *fiber.Ctx) error {
 
@@ -20,7 +25,7 @@ func PatchYoutube (c *fiber.Ctx) error {
 
     var youtube models.Youtube
         
-    newYoutube := models.Youtube {
+    newYoutube := PatchYoutubeBody {
         Judul: form.Value["judul"][0],
         Link: form.Value["link"][0],               
     }    
@@ -42,12 +47,23 @@ func PatchYoutube (c *fiber.Ctx) error {
 	}
 
 	if err := validate.Struct(&newYoutube); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 	
+    youtube = models.Youtube{
+        Judul: newYoutube.Judul,
+        Link: newYoutube.Link,
+    }
+
 	if result := initialize.DB.Where("id = ?", id).Updates(&youtube); result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "status": "error",

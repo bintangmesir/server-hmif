@@ -58,13 +58,25 @@ func PatchAdmin (c *fiber.Ctx) error {
 	}	
 
 	if err := validate.Struct(&newAdmin); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
-    
-    if len(fotoProfile) > 0 {		        
+	
+	admin = models.Admin{
+		Name: newAdmin.Name,
+		Email: newAdmin.Email,
+		FotoProfile: newAdmin.FotoProfile,
+	}
+
+	if len(fotoProfile) > 0 {		        
         if admin.FotoProfile != nil {
             if  err := utils.DeleteFile(admin.FotoProfile, initialize.ENV_DIR_ADMIN_FILES, id); err != nil {
                 return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -82,12 +94,6 @@ func PatchAdmin (c *fiber.Ctx) error {
 			})
 		}
 		admin.FotoProfile = &uploadedFileNames
-	}
-	
-	admin = models.Admin{
-		Name: newAdmin.Name,
-		Email: newAdmin.Email,
-		FotoProfile: newAdmin.FotoProfile,
 	}
 
 	if result := initialize.DB.Where("id = ?", id).Updates(&admin); result.Error != nil {

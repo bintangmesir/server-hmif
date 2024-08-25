@@ -3,6 +3,7 @@ package youtube
 import (
 	"server/initialize"
 	"server/internal/models"
+	"server/pkg/utils"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -36,10 +37,16 @@ func PostYoutube (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(youtube); err != nil {
+	if err := validate.Struct(&youtube); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 

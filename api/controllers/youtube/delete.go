@@ -27,5 +27,8 @@ func DeleteYoutube (c *fiber.Ctx) error {
         })
 	}
     
-    return c.SendStatus(fiber.StatusNoContent)
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{
+        "status": "success",
+        "message": "Success to delete data youtube",
+    })
 }

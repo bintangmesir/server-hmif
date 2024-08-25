@@ -4,10 +4,12 @@ import (
 	"server/initialize"
 	"server/internal/models"
 	"server/pkg/utils"
+	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
@@ -37,10 +39,16 @@ func Login(c *fiber.Ctx) error {
         })
     }
 
-    if err := validate.Struct(req); err != nil {
+    if err := validate.Struct(&req); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 
@@ -51,6 +59,13 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
     
+    if err := bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(req.Password)); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Password is incorrect.",
+		})
+	}
+
     accessToken, err := utils.GenerateToken(admin.ID, admin.Role, "access")
     if err != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -67,12 +82,14 @@ func Login(c *fiber.Ctx) error {
         })
     }
 
+    protocol, _ :=strconv.ParseBool(initialize.ENV_POTOCOL_HTTPS)
+
     c.Cookie(&fiber.Cookie{
         Name:     "accessToken",
         Value:    accessToken,
         Expires:  time.Now().Add(time.Hour * 1), // Token expires in 1 hour                       
         HTTPOnly: false,        
-        Secure:   utils.HttpsCheck(c),       
+        Secure:   protocol,       
     })
 
     c.Cookie(&fiber.Cookie{
@@ -80,11 +97,11 @@ func Login(c *fiber.Ctx) error {
         Value:    refreshToken,
         Expires:  time.Now().Add(time.Hour * 24 * 7), // Refresh token expires in 7 days
         HTTPOnly: true,        
-        Secure:   utils.HttpsCheck(c),        
+        Secure:   protocol,        
     })
 
     return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-        "status":"error",
+        "status":"success",
         "message": "Logged in successfully",
     })   
 }

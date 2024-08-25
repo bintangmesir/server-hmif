@@ -10,6 +10,13 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type PatchArtikelBody struct {
+	Title           string          	`gorm:"size:255;not null" json:"title"`
+	SubTitle        string          	`gorm:"size:255" json:"subTitle"`
+	Thumbnail       *string         	`gorm:"size:255" json:"thumbnail"`
+	CommentEnabled  bool            	`gorm:"default:true" json:"commentEnabled"`
+}
+
 func PatchArtikel (c *fiber.Ctx) error {
 
     id := c.Params("id")
@@ -30,7 +37,7 @@ func PatchArtikel (c *fiber.Ctx) error {
 
     var artikel models.Artikel
 
-    newArtikel := models.Artikel {        
+    newArtikel := PatchArtikelBody {        
         Title: form.Value["title"][0],
         SubTitle: form.Value["subTitle"][0],
         CommentEnabled: commentEnabled,        		
@@ -53,12 +60,24 @@ func PatchArtikel (c *fiber.Ctx) error {
 	}
 
 	if err := validate.Struct(&newArtikel); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
     
+    artikel = models.Artikel{
+        Title: newArtikel.Title,
+        SubTitle: newArtikel.SubTitle,
+        CommentEnabled: newArtikel.CommentEnabled,        		        
+    }
+	
     if len(thumbnail) > 0 {		        
         if artikel.Thumbnail != nil {
             if  err := utils.DeleteFile(artikel.Thumbnail, initialize.ENV_DIR_ARTIKEL_FILES, id); err != nil {
@@ -79,18 +98,29 @@ func PatchArtikel (c *fiber.Ctx) error {
 		artikel.Thumbnail = &uploadedFileNames
 	}
 
-    artikel = models.Artikel{
-        Title: newArtikel.Title,
-        SubTitle: newArtikel.SubTitle,
-        CommentEnabled: newArtikel.CommentEnabled,        		        
-    }
-	
 	if result := initialize.DB.Where("id = ?", id).Updates(&artikel); result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
             "status": "error",
             "message": "Failed to update data artikel",
         })
 	}
+
+    // Fetch existing artikel content
+	var prevArtikelContents []models.ArtikelContent
+	if err := initialize.DB.Where("artikel_id = ?", id).Find(&prevArtikelContents).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"status":  "error",
+			"message": "Failed to fetch existing artikel content.",
+		})
+	}
+
+	if result := initialize.DB.Delete(&prevArtikelContents); result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status": "error",
+            "message": "Failed to delete data artikel",
+        })
+	}
+
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
         "status": "success",

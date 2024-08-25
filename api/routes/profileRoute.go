@@ -13,5 +13,6 @@ func ProfileRoute(app *fiber.App){
     v1 := api.Group("/v1")
     
     v1.Patch("/profile", middlewares.RoleMiddleware([]string{}), profile.PatchProfileAdmin)
+    
     v1.Patch("/profile/update-password", middlewares.RoleMiddleware([]string{}), profile.UpdatePasswordProfileAdmin)
 }

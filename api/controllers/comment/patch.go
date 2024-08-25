@@ -9,6 +9,12 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+type PatchCommentBody struct {
+	Text      	string     	`gorm:"type:text;not null" json:"text" validate:"required"`	
+	Email     	string     	`gorm:"size:100;not null" json:"email" validate:"required,email"`
+}
+
+
 func PatchComment (c *fiber.Ctx) error {
 
     id := c.Params("id")
@@ -22,7 +28,7 @@ func PatchComment (c *fiber.Ctx) error {
 
     var comment models.Comment
     
-    newComment := models.Comment {
+    newComment := PatchCommentBody {
         Text: form.Value["text"][0],
         Email: form.Value["email"][0],        		           
     }    
@@ -44,12 +50,23 @@ func PatchComment (c *fiber.Ctx) error {
 	}
 
 	if err := validate.Struct(&newComment); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
-    
+
+    comment = models.Comment{
+        Text: newComment.Text,
+        Email: newComment.Email,
+    }
+
     if len(image) > 0 {		        
         if comment.Image != nil {
             if  err := utils.DeleteFile(comment.Image, initialize.ENV_DIR_COMMENT_FILES, id); err != nil {
@@ -69,11 +86,6 @@ func PatchComment (c *fiber.Ctx) error {
 		}
 		comment.Image = &uploadedFileNames
 	}
-
-    comment = models.Comment{
-        Text: newComment.Text,
-        Email: newComment.Email,
-    }
 	
 	if result := initialize.DB.Where("id = ?", id).Updates(&comment); result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

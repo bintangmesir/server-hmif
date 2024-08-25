@@ -18,7 +18,7 @@ func PostArtikel (c *fiber.Ctx) error {
 		return err
 	}
 
-    thumbnail := form.File["thumbnail"]
+    thumbnail := form.File["thumbnail"]	
 
     commentEnabled, err := strconv.ParseBool(form.Value["commentEnabled"][0]); if err != nil {
         c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to convert Comment Enabled variable "})
@@ -46,10 +46,16 @@ func PostArtikel (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(artikel); err != nil {
+	if err := validate.Struct(&artikel); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 
@@ -71,7 +77,6 @@ func PostArtikel (c *fiber.Ctx) error {
         })
 	}
 
-
     refreshToken := c.Cookies("refreshToken")
 
     claims, err := utils.ParseToken(refreshToken, "refresh")
@@ -86,8 +91,6 @@ func PostArtikel (c *fiber.Ctx) error {
 
 	var admin models.Admin
 
-	initialize.DB.Model(&artikel).Association("Admins").Append([]models.Admin{admin})
-
 	if err := initialize.DB.Where("id = ?", userID).First(&admin).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
             "status": "error",
@@ -95,6 +98,7 @@ func PostArtikel (c *fiber.Ctx) error {
 		})
 	}
 	
+	initialize.DB.Model(&artikel).Association("Admins").Append([]models.Admin{admin})
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
         "id": artikel.ID,

@@ -13,6 +13,4 @@ func ArtikelContentRoute(app *fiber.App){
     v1 := api.Group("/v1")
     
     v1.Post("/artikel-content", middlewares.RoleMiddleware([]string{"staff_kominfo"}), artikelcontent.PostArtikelContent)
-    v1.Patch("/artikel-content/:id", middlewares.RoleMiddleware([]string{"staff_kominfo"}), artikelcontent.PatchArtikelContent)
-    v1.Delete("/artikel-content/:id", middlewares.RoleMiddleware([]string{"staff_kominfo"}), artikelcontent.DeleteArtikelContent)
 }

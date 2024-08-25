@@ -3,6 +3,7 @@ package barang
 import (
 	"server/initialize"
 	"server/internal/models"
+	"server/pkg/utils"
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
@@ -57,10 +58,16 @@ func PostBarang (c *fiber.Ctx) error {
         })
 	}
 
-	if err := validate.Struct(barang); err != nil {
+	if err := validate.Struct(&barang); err != nil {
+		var errorMassage []string
+
+		validationErrors := err.(validator.ValidationErrors)
+		for _, fieldError := range validationErrors{			
+			errorMassage = append(errorMassage, utils.ErrorMassage(fieldError.Field(), fieldError.Tag(), fieldError.Param()))
+		}
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
             "status": "error",
-            "message": err.Error(),
+            "message": errorMassage,
         })
 	}
 

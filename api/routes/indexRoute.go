@@ -8,6 +8,7 @@ func IndexRoute (app *fiber.App){
     CommentRoute(app)
 
     // Kominfo Route
+    HimpunanRoute(app)  
     AdminRoute(app)  
     ArtikelRoute(app)
     ArtikelContentRoute(app)
