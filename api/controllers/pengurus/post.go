@@ -53,16 +53,17 @@ func PostPengurus (c *fiber.Ctx) error {
         })
 	}
 
+	
 	 if len(foto) > 0 {			
 		uploadedFileNames, err := utils.UploadFile(foto, initialize.ENV_DIR_PENGURUS_FILES, pengurus.ID.String())
-		if err != nil {
+		if err != nil {			
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
                 "status": "error",
 				"message": "Internal server error.",
 			})
 		}
 		pengurus.Foto = &uploadedFileNames
-	}
+	}	
 	
 	if result := initialize.DB.Create(&pengurus); result.Error != nil {		
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
